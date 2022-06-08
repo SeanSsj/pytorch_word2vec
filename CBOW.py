@@ -9,7 +9,9 @@ class CBOWModel(nn.Module):
         super(CBOWModel, self).__init__()
         self.emb_size = emb_size
         self.emb_dimension = emb_dimension
-        self.window_size = window_size
+        
+        ### 因为CBOW是根据window里的其他词来给目标词embedding
+        self.window_size = window_size 
         self.u_embeddings = nn.Embedding(2 * emb_size - 1, emb_dimension, sparse=True)
         # emb_size = 8934, num_embeddings = 2 * emb_size - 1 = 17867
         self.v_embeddings = nn.Embedding(2 * emb_size - 1, emb_dimension, sparse=True)
@@ -23,8 +25,12 @@ class CBOWModel(nn.Module):
         self.v_embeddings.weight.data.uniform_(-0, 0)
 
     def forward(self, pos_u, pos_v, neg_u, neg_v):
+        
+        ###neg_v,neg_u是用来负采样的
         losses = []
         emb_v = []
+        
+        ###这个是sum公式，即将window里除了center word外所有词的词向量相加作为我们预测出现的中心词，在算出与实际中心词的相似度来计算loss
         for i in range(len(pos_v)):
             emb_v_v = self.u_embeddings(Variable(torch.LongTensor(pos_v[i])))
             emb_v_v_numpy = emb_v_v.data.numpy()
